@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard - CareConnect</title>
+</head>
+<body>
+    <h2>Doctor Dashboard</h2>
+
+    {% for r in reports %}
+        <hr>
+        <p><strong>Patient:</strong> {{ r[0] }}</p>
+        <p><strong>File:</strong> {{ r[1] }}</p>
+        <p><strong>Symptoms:</strong> {{ r[2] }}</p>
+        <p><strong>AI Suggestion:</strong> {{ r[3] }}</p>
+        <p><strong>Time:</strong> {{ r[4] }}</p>
+    {% else %}
+        <p>No reports found.</p>
+    {% endfor %}
+</body>
+</html>

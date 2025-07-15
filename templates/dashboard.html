@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - CareConnect</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        textarea { width: 100%; max-width: 600px; }
+        form { margin-bottom: 30px; }
+        hr { margin-top: 20px; }
+        .report-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h2>Welcome, {{ user }}</h2>
+    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <label>Upload Report:</label><br>
+        <input type="file" name="file" required><br><br>
+
+        <label>Describe your symptoms:</label><br>
+        <textarea name="symptoms" required></textarea><br><br>
+
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if filename %}
+        <hr>
+        <h3>Uploaded File: {{ filename }}</h3>
+        <p><strong>Symptoms:</strong> {{ symptoms }}</p>
+        <p><strong>AI Suggestion:</strong> {{ ai_reply }}</p>
+    {% endif %}
+
+    {% if report_history %}
+        <hr>
+        <h3>📄 Your Report History</h3>
+        {% for report in report_history %}
+            <div class="report-card">
+                <p><strong>File:</strong> {{ report[0] }}</p>
+                <p><strong>Symptoms:</strong> {{ report[1] }}</p>
+                <p><strong>AI Suggestion:</strong> {{ report[2] }}</p>
+                <p><strong>Doctor Reply:</strong> {{ report[3] or "Pending..." }}</p>
+                <p><strong>Time:</strong> {{ report[4] }}</p>
+            </div>
+        {% endfor %}
+    {% endif %}
+</body>
+</html>
+
