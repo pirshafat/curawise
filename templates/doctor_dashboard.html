@@ -2,19 +2,71 @@
 <html>
 <head>
     <title>Doctor Dashboard - CareConnect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+        h2 { color: #333; }
+        textarea {
+            width: 100%;
+            max-width: 600px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            resize: vertical;
+        }
+        form {
+            margin-bottom: 30px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .logout { float: right; }
+        .pdf-link {
+            display: inline-block;
+            margin-top: 8px;
+            color: #007BFF;
+            text-decoration: none;
+        }
+    </style>
 </head>
 <body>
     <h2>Doctor Dashboard</h2>
+    <div class="logout"><a href="{{ url_for('logout') }}">Logout</a></div>
 
-    {% for r in reports %}
+    {% for report in reports %}
+        <form action="{{ url_for('doctor_reply', report_id=report[5]) }}" method="POST">
+            <p><strong>Patient:</strong> {{ report[0] }}</p>
+            <p><strong>File:</strong> {{ report[1] }}</p>
+            <p><strong>Symptoms:</strong> {{ report[2] }}</p>
+            <p><strong>AI Suggestion:</strong> {{ report[3] }}</p>
+            <p><strong>Time:</strong> {{ report[4] }}</p>
+
+            <label><strong>Doctor Reply:</strong></label><br>
+            <textarea name="reply" rows="3" placeholder="Write your reply...">{{ report[6] }}</textarea><br><br>
+            <button type="submit">Submit Reply</button><br>
+            <a class="pdf-link" href="{{ url_for('download_pdf', report_id=report[5]) }}" target="_blank">📥 Download PDF</a>
+        </form>
         <hr>
-        <p><strong>Patient:</strong> {{ r[0] }}</p>
-        <p><strong>File:</strong> {{ r[1] }}</p>
-        <p><strong>Symptoms:</strong> {{ r[2] }}</p>
-        <p><strong>AI Suggestion:</strong> {{ r[3] }}</p>
-        <p><strong>Time:</strong> {{ r[4] }}</p>
-    {% else %}
-        <p>No reports found.</p>
     {% endfor %}
 </body>
 </html>
+
+
+
+
+

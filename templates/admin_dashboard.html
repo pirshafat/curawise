@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard - CareConnect</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2 {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        .logout-link {
+            font-size: 14px;
+            text-decoration: none;
+            color: #007BFF;
+            background: #f0f0f0;
+            padding: 6px 12px;
+            border-radius: 5px;
+        }
+        .logout-link:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <h2>📊 Admin Dashboard 
+        <a class="logout-link" href="{{ url_for('logout') }}">Logout</a>
+    </h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Patient</th>
+                <th>File</th>
+                <th>Symptoms</th>
+                <th>AI Suggestion</th>
+                <th>Doctor Reply</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in reports %}
+            <tr>
+                <td>{{ r[0] }}</td>
+                <td>{{ r[1] }}</td>
+                <td>{{ r[2] }}</td>
+                <td>{{ r[3] }}</td>
+                <td>{{ r[4] or 'Pending' }}</td>
+                <td>{{ r[5] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+
