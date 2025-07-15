@@ -14,7 +14,7 @@
     <h2>Welcome, {{ user }}</h2>
     <p><a href="{{ url_for('logout') }}">Logout</a></p>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data">
         <label>Upload Report:</label><br>
         <input type="file" name="file" required><br><br>
 
@@ -43,7 +43,10 @@
                 <p><strong>Time:</strong> {{ report[4] }}</p>
             </div>
         {% endfor %}
+    {% else %}
+        <p>No reports found.</p>
     {% endif %}
 </body>
 </html>
+
 
