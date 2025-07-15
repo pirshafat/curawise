@@ -1,103 +1,115 @@
-# app.py
-from flask import Flask, render_template, request, redirect, url_for
-import os
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
-from werkzeug.utils import secure_filename
+import os
 from datetime import datetime
+from textblob import TextBlob
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
-app.config['DATABASE'] = 'careconnect.db'
+app.secret_key = "careconnect-secret"
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Dummy login (no real auth for now)
-users = {"doctor": "1234", "patient": "abcd"}
-
-# Ensure upload folder exists
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-
-# ----------------------------
-# Database Setup
-# ----------------------------
-def init_db():
-    with sqlite3.connect(app.config['DATABASE']) as conn:
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS reports (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT,
-                        filename TEXT,
-                        symptoms TEXT,
-                        ai_reply TEXT,
-                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-                    )''')
-        conn.commit()
-
-# ----------------------------
-# Fake AI Response Generator
-# ----------------------------
-def generate_fake_ai_reply(symptoms):
-    reply = ""
-    s = symptoms.lower()
-
-    if "fever" in s:
-        reply += "You may have an infection. Stay hydrated and monitor your temperature.\n"
-    if "headache" in s:
-        reply += "Consider resting in a dark room and drinking water.\n"
-    if reply == "":
-        reply = "Thank you for submitting your symptoms. A doctor will review them shortly."
-
-    return reply.strip()
+# Dummy users for demonstration
+users = {
+    "doctor": "1234",
+    "patient": "abcd",
+    "admin": "adminpass"
+}
 
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if users.get(username) == password:
-            if username == "doctor":
-                return redirect(url_for('doctor_dashboard'))
-            else:
-                return redirect(url_for('patient_dashboard'))
-        else:
-            return "Login failed. Try again."
     return render_template('login.html')
 
-@app.route('/dashboard/patient', methods=['GET', 'POST'])
-def patient_dashboard():
-    ai_reply = None
-    filename = None
-    symptoms = None
-    user = "patient"
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form['username']
+    password = request.form['password']
 
-    if request.method == 'POST':
-        file = request.files['file']
-        symptoms = request.form['symptoms']
-        if file:
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            ai_reply = generate_fake_ai_reply(symptoms)
+    if username in users and users[username] == password:
+        session['username'] = username
+        role = username  # using username as role
+        if role == "doctor":
+            return redirect(url_for('doctor_dashboard'))
+        elif role == "patient":
+            return redirect(url_for('dashboard'))
+        elif role == "admin":
+            # Admin dashboard logic
+            conn = sqlite3.connect('careconnect.db')
+            c = conn.cursor()
+            c.execute("SELECT username, filename, symptoms, ai_suggestion, doctor_reply, timestamp FROM reports")
+            reports = c.fetchall()
+            conn.close()
+            return render_template('admin_dashboard.html', reports=reports)
 
-            # Save to DB
-            with sqlite3.connect(app.config['DATABASE']) as conn:
-                c = conn.cursor()
-                c.execute("INSERT INTO reports (username, filename, symptoms, ai_reply) VALUES (?, ?, ?, ?)",
-                          (user, filename, symptoms, ai_reply))
-                conn.commit()
+    return render_template('login.html', error="Login failed. Try again.")
 
-    return render_template('dashboard.html', user=user, filename=filename, symptoms=symptoms, ai_reply=ai_reply)
+@app.route('/dashboard')
+def dashboard():
+    try:
+        conn = sqlite3.connect('careconnect.db')
+        cursor = conn.cursor()
+        username = session.get('username')
+        cursor.execute('SELECT filename, symptoms, ai_suggestion, doctor_reply, timestamp FROM reports WHERE username = ?', (username,))
+        reports = cursor.fetchall()
+        conn.close()
+        return render_template('patient_dashboard.html', user=username, report_history=reports)
+    except Exception as e:
+        return f"Error loading dashboard: {e}"
 
-@app.route('/dashboard/doctor')
+@app.route('/doctor_dashboard')
 def doctor_dashboard():
-    with sqlite3.connect(app.config['DATABASE']) as conn:
-        c = conn.cursor()
-        c.execute("SELECT username, filename, symptoms, ai_reply, timestamp FROM reports ORDER BY timestamp DESC")
-        reports = c.fetchall()
-    return render_template('doctor_dashboard.html', reports=reports)
+    try:
+        conn = sqlite3.connect('careconnect.db')
+        cursor = conn.cursor()
+        cursor.execute('SELECT username, filename, symptoms, ai_suggestion, doctor_reply, timestamp FROM reports')
+        reports = cursor.fetchall()
+        conn.close()
+        return render_template('doctor_dashboard.html', reports=reports)
+    except Exception as e:
+        return f"Error loading doctor dashboard: {e}"
+
+@app.route('/submit', methods=['POST'])
+def submit():
+    username = session.get('username')
+    symptoms = request.form['symptoms']
+    file = request.files['file']
+    filename = None
+
+    if file:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+    # AI Suggestion using TextBlob
+    blob = TextBlob(symptoms)
+    ai_suggestion = "You may have an infection. Stay hydrated and monitor your temperature." if 'fever' in symptoms.lower() else "No immediate concern found."
+
+    # Save to database
+    conn = sqlite3.connect('careconnect.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO reports (username, filename, symptoms, ai_reply, timestamp, doctor_reply)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (username, filename, symptoms, ai_suggestion, datetime.now(), None))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('dashboard'))
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    init_db()
+    if not os.path.exists(UPLOAD_FOLDER):
+        os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
+
+
+
+
+
+
