@@ -38,13 +38,18 @@
                 </form>
             </td>
             <td>
-                <a href="{{ url_for('download_pdf', report_id=report[5]) }}" class="btn btn-sm btn-secondary" target="_blank">📥</a>
+                {% if report[7] %}
+                    <a href="{{ url_for('download_file', filename=report[7]) }}" class="btn btn-sm btn-secondary" target="_blank">📥</a>
+                {% else %}
+                    <span class="text-muted">No file</span>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endblock %}
+
 
 
 
