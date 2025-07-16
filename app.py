@@ -5,27 +5,30 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 import fitz  # PyMuPDF
 from openai import OpenAI
+from dotenv import load_dotenv  # ✅ For local development
+
+# ✅ Load environment variables from .env file only for local dev
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = "careconnect-secret"
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# ✅ Securely load OpenAI API key from environment
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Dummy users
+# Dummy users (can be replaced with a real auth system)
 users = {
     "doctor": "1234",
     "patient": "abcd",
     "admin": "adminpass"
 }
 
-# Home page
 @app.route('/')
 def index():
     return render_template('login.html')
 
-# Login
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form['username']
@@ -33,12 +36,11 @@ def login():
 
     if username in users and users[username] == password:
         session['username'] = username
-        role = username  # assume username == role
-        if role == "doctor":
+        if username == "doctor":
             return redirect(url_for('doctor_dashboard'))
-        elif role == "patient":
+        elif username == "patient":
             return redirect(url_for('dashboard'))
-        elif role == "admin":
+        elif username == "admin":
             conn = sqlite3.connect('careconnect.db')
             c = conn.cursor()
             c.execute("SELECT username, filename, symptoms, ai_reply, doctor_reply, timestamp FROM reports")
@@ -48,7 +50,6 @@ def login():
 
     return render_template('login.html', error="Login failed. Try again.")
 
-# Patient dashboard
 @app.route('/dashboard')
 def dashboard():
     try:
@@ -62,7 +63,6 @@ def dashboard():
     except Exception as e:
         return f"Error loading dashboard: {e}"
 
-# Doctor dashboard
 @app.route('/doctor_dashboard')
 def doctor_dashboard():
     try:
@@ -75,7 +75,6 @@ def doctor_dashboard():
     except Exception as e:
         return f"Error loading doctor dashboard: {e}"
 
-# Submit patient report
 @app.route('/submit', methods=['POST'])
 def submit():
     username = session.get('username')
@@ -92,13 +91,11 @@ def submit():
         try:
             # Extract text from PDF
             doc = fitz.open(filepath)
-            text = ""
-            for page in doc:
-                text += page.get_text()
+            text = "".join([page.get_text() for page in doc])
 
             # AI prompt
             prompt = f"""A patient uploaded a lab report with the following data:\n\n{text}\n\nSymptoms: {symptoms}\n\nAnalyze and give a health suggestion."""
-            
+
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
@@ -114,7 +111,7 @@ def submit():
         except Exception as e:
             ai_suggestion = f"AI Error: {str(e)}"
 
-    # Save to DB
+    # Save report to database
     conn = sqlite3.connect('careconnect.db')
     cursor = conn.cursor()
     cursor.execute('''
@@ -126,7 +123,6 @@ def submit():
 
     return redirect(url_for('dashboard'))
 
-# Doctor reply route
 @app.route('/reply/<int:report_id>', methods=['POST'])
 def doctor_reply(report_id):
     reply = request.form['reply']
@@ -137,17 +133,17 @@ def doctor_reply(report_id):
     conn.close()
     return redirect(url_for('doctor_dashboard'))
 
-# Logout
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
-# Ensure uploads folder exists
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
     app.run(debug=True)
+
+
 
 
 
