@@ -1,52 +1,56 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Dashboard - CareConnect</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        textarea { width: 100%; max-width: 600px; }
-        form { margin-bottom: 30px; }
-        hr { margin-top: 20px; }
-        .report-card { background: #f9f9f9; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <h2>Welcome, {{ user }}</h2>
-    <p><a href="{{ url_for('logout') }}">Logout</a></p>
+{% extends 'base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
 
-    <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data">
-        <label>Upload Report:</label><br>
-        <input type="file" name="file" required><br><br>
+{% block content %}
+<h3 class="mb-4">👤 Welcome, {{ user }}</h3>
 
-        <label>Describe your symptoms:</label><br>
-        <textarea name="symptoms" required></textarea><br><br>
+<form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" class="mb-4">
+    <div class="mb-3">
+        <label for="symptoms" class="form-label">Symptoms</label>
+        <input type="text" name="symptoms" class="form-control" placeholder="Describe your symptoms" required>
+    </div>
+    <div class="mb-3">
+        <label for="file" class="form-label">Upload Lab Report (PDF)</label>
+        <input type="file" name="file" class="form-control" accept="application/pdf" required>
+    </div>
+    <button type="submit" class="btn btn-success">Submit</button>
+</form>
 
-        <button type="submit">Submit</button>
-    </form>
-
-    {% if filename %}
-        <hr>
-        <h3>Uploaded File: {{ filename }}</h3>
-        <p><strong>Symptoms:</strong> {{ symptoms }}</p>
-        <p><strong>AI Suggestion:</strong> {{ ai_reply }}</p>
-    {% endif %}
-
-    {% if report_history %}
-        <hr>
-        <h3>📄 Your Report History</h3>
+<h5 class="mb-3">📋 Your Report History</h5>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Report</th>
+            <th>Symptoms</th>
+            <th>AI Suggestion</th>
+            <th>Doctor Reply</th>
+            <th>Time</th>
+            <th>Prescription</th>
+        </tr>
+    </thead>
+    <tbody>
         {% for report in report_history %}
-            <div class="report-card">
-                <p><strong>File:</strong> {{ report[0] }}</p>
-                <p><strong>Symptoms:</strong> {{ report[1] }}</p>
-                <p><strong>AI Suggestion:</strong> {{ report[2] }}</p>
-                <p><strong>Doctor Reply:</strong> {{ report[3] or "Pending..." }}</p>
-                <p><strong>Time:</strong> {{ report[4] }}</p>
-            </div>
+        <tr>
+            <td>{{ report[0] }}</td>
+            <td>{{ report[1] }}</td>
+            <td>{{ report[2] }}</td>
+            <td>{{ report[3] or 'Pending...' }}</td>
+            <td>{{ report[4] }}</td>
+            <td>
+                {% if report[5] %}
+                    <a href="{{ url_for('static', filename='prescriptions/' ~ report[5]) }}" target="_blank" class="btn btn-sm btn-outline-primary">View</a>
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+        </tr>
         {% endfor %}
-    {% else %}
-        <p>No reports found.</p>
-    {% endif %}
-</body>
-</html>
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+
 
 

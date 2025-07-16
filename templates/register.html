@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Login - CareConnect{% endblock %}
+{% block title %}Register - CareConnect{% endblock %}
 
 {% block content %}
 <div class="d-flex align-items-center justify-content-center" style="min-height: 100vh;">
     <div class="card shadow p-4" style="width: 100%; max-width: 400px;">
-        <h3 class="text-center mb-3">🔐 CareConnect Login</h3>
+        <h3 class="text-center mb-3">📝 Register</h3>
 
         {% if error %}
             <div class="alert alert-danger text-center">{{ error }}</div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('register') }}">
             <div class="mb-3">
                 <label class="form-label">Username</label>
                 <input type="text" name="username" class="form-control" placeholder="Enter username" required>
@@ -20,16 +20,22 @@
                 <label class="form-label">Password</label>
                 <input type="password" name="password" class="form-control" placeholder="Enter password" required>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <div class="mb-3">
+                <label class="form-label">Role</label>
+                <select name="role" class="form-select" required>
+                    <option value="">Select Role</option>
+                    <option value="patient">Patient</option>
+                    <option value="doctor">Doctor</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Register</button>
         </form>
 
         <div class="text-center mt-3">
-            <a href="{{ url_for('register') }}">New user? Register here →</a>
+            <a href="{{ url_for('index') }}">← Back to Login</a>
         </div>
     </div>
 </div>
 {% endblock %}
-
-
 
 

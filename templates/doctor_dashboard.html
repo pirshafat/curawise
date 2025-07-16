@@ -1,70 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Doctor Dashboard - CareConnect</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #f8f8f8;
-        }
-        h2 { color: #333; }
-        textarea {
-            width: 100%;
-            max-width: 600px;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            resize: vertical;
-        }
-        form {
-            margin-bottom: 30px;
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .logout { float: right; }
-        .pdf-link {
-            display: inline-block;
-            margin-top: 8px;
-            color: #007BFF;
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <h2>Doctor Dashboard</h2>
-    <div class="logout"><a href="{{ url_for('logout') }}">Logout</a></div>
+{% extends 'base.html' %}
+{% block title %}Doctor Dashboard{% endblock %}
 
-    {% for report in reports %}
-        <form action="{{ url_for('doctor_reply', report_id=report[5]) }}" method="POST">
-            <p><strong>Patient:</strong> {{ report[0] }}</p>
-            <p><strong>File:</strong> {{ report[1] }}</p>
-            <p><strong>Symptoms:</strong> {{ report[2] }}</p>
-            <p><strong>AI Suggestion:</strong> {{ report[3] }}</p>
-            <p><strong>Time:</strong> {{ report[4] }}</p>
+{% block content %}
+<h3 class="mb-4">🩺 Doctor Dashboard</h3>
 
-            <label><strong>Doctor Reply:</strong></label><br>
-            <textarea name="reply" rows="3" placeholder="Write your reply...">{{ report[6] }}</textarea><br><br>
-            <button type="submit">Submit Reply</button><br>
-            <a class="pdf-link" href="{{ url_for('download_pdf', report_id=report[5]) }}" target="_blank">📥 Download PDF</a>
-        </form>
-        <hr>
-    {% endfor %}
-</body>
-</html>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Patient</th>
+            <th>File</th>
+            <th>Symptoms</th>
+            <th>AI Suggestion</th>
+            <th>Time</th>
+            <th>Reply</th>
+            <th>Upload Prescription</th>
+            <th>Download</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for report in reports %}
+        <tr>
+            <td>{{ report[0] }}</td>
+            <td>{{ report[1] }}</td>
+            <td>{{ report[2] }}</td>
+            <td>{{ report[3] }}</td>
+            <td>{{ report[4] }}</td>
+            <td>
+                <form method="POST" action="{{ url_for('doctor_reply', report_id=report[5]) }}">
+                    <input type="text" name="reply" class="form-control mb-2" placeholder="Type reply" required>
+                    <button type="submit" class="btn btn-sm btn-primary">Reply</button>
+                </form>
+            </td>
+            <td>
+                <form method="POST" action="{{ url_for('upload_prescription', report_id=report[5]) }}" enctype="multipart/form-data">
+                    <input type="file" name="prescription" accept="application/pdf" class="form-control mb-2" required>
+                    <button type="submit" class="btn btn-sm btn-success">Upload</button>
+                </form>
+            </td>
+            <td>
+                <a href="{{ url_for('download_pdf', report_id=report[5]) }}" class="btn btn-sm btn-secondary" target="_blank">📥</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+
+
+
 
 
 
