@@ -7,16 +7,16 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import fitz  # PyMuPDF
 from openai import OpenAI
 from dotenv import load_dotenv
+from flask_talisman import Talisman
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
+Talisman(app, content_security_policy=None)
 app.secret_key = "careconnect-secret"
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Load OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @app.route('/')
@@ -34,8 +34,7 @@ def register():
         conn = sqlite3.connect('careconnect.db')
         cursor = conn.cursor()
         try:
-            cursor.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
-                           (username, hashed_pw, role))
+            cursor.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', (username, hashed_pw, role))
             conn.commit()
             flash("✅ Registered successfully. Please login.")
             return redirect(url_for('index'))
@@ -57,14 +56,9 @@ def login():
     conn.close()
 
     if result and check_password_hash(result[0], password):
-        role = result[1]
         session['username'] = username
-        session['role'] = role
-
-        if role == "doctor":
-            return redirect(url_for('doctor_dashboard'))
-        elif role == "patient":
-            return redirect(url_for('dashboard'))
+        session['role'] = result[1]
+        return redirect(url_for('doctor_dashboard' if result[1] == 'doctor' else 'dashboard'))
 
     return render_template('login.html', error="Login failed. Try again.")
 
@@ -114,7 +108,6 @@ def submit():
                 temperature=0.7,
                 max_tokens=300
             )
-
             ai_suggestion = response.choices[0].message.content.strip()
 
         except Exception as e:
@@ -154,23 +147,20 @@ def upload_prescription(report_id):
         cursor.execute('UPDATE reports SET prescription_filename = ? WHERE id = ?', (filename, report_id))
         conn.commit()
         conn.close()
-
     return redirect(url_for('doctor_dashboard'))
 
-@app.route('/download/<filename>')
+@app.route('/download/<path:filename>')  # <- Path support for subdirs or long names
 def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)
-    session.pop('role', None)
+    session.clear()
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    print("🔑 API KEY LOADED:", os.getenv("OPENAI_API_KEY"))
     app.run(debug=True)
 
 
