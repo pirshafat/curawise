@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Welcome to Curawise{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="display-4 fw-bold">Welcome to Curawise</h1>
+  <p class="lead">AI-powered healthcare platform connecting patients with the right doctors.</p>
+  <div class="mt-4">
+    <a href="/register" class="btn btn-primary btn-lg me-2">Get Started</a>
+    <a href="/login" class="btn btn-outline-secondary btn-lg">Login</a>
+  </div>
+</div>
+
+<section class="row text-center mt-5">
+  <div class="col-md-4">
+    <img src="https://img.icons8.com/ios-filled/100/stethoscope.png" alt="Doctor" />
+    <h3 class="mt-3">Find the Right Doctor</h3>
+    <p>We use AI to match patients with the most suitable specialist.</p>
+  </div>
+  <div class="col-md-4">
+    <img src="https://img.icons8.com/ios-filled/100/medical-report.png" alt="Reports" />
+    <h3 class="mt-3">Upload Reports</h3>
+    <p>Patients can upload lab reports and symptoms securely for review.</p>
+  </div>
+  <div class="col-md-4">
+    <img src="https://img.icons8.com/ios-filled/100/prescription.png" alt="Prescription" />
+    <h3 class="mt-3">Get Prescriptions</h3>
+    <p>Doctors respond with AI-aided suggestions and prescriptions in PDF.</p>
+  </div>
+</section>
+
+<footer class="text-center mt-5 pt-4 border-top">
+  <p class="text-muted">&copy; 2025 Curawise. All rights reserved.</p>
+</footer>
+{% endblock %}
+
